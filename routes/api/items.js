@@ -3,10 +3,25 @@ const router = express.Router();
 
 //Item schema
 const Item = require("../../models/item-model");
+
+const removedFields = {
+	"stats._id": 0,
+	__v: 0,
+	added: 0
+};
+
 // GET all items
 // Excluding stats._id and __v fields on the response
 router.get("/", (req, res) => {
-	Item.find({}, { "stats._id": 0, __v: 0, added: 0 })
+	// if a query params exist search based on it
+	const searchObj = {};
+	if (req.query.search) {
+		console.log(req.query.search);
+		// regex the input
+		const regex = new RegExp(escapeRegex(req.query.search), "gi");
+		searchObj.name = regex;
+	}
+	Item.find(searchObj, removedFields)
 		.sort("-added")
 		.exec()
 		.then(docs => {
@@ -37,14 +52,22 @@ router.post("/", (req, res) => {
 		.save()
 		.then(result => {
 			// loop results.stats to remove _id field in response
+			// let res_stats = [];
+			// for (let i = 0, len = result.stats.length; i < len; i++) {
+			// 	stats = {
+			// 		_name: result.stats[i]._name,
+			// 		_value: result.stats[i]._value
+			// 	};
+			// 	res_stats.push(stats);
+			// }
 			let res_stats = [];
-			for (let i = 0, len = result.stats.length; i < len; i++) {
+			result.stats.forEach(stat => {
 				stats = {
-					_name: result.stats[i]._name,
-					_value: result.stats[i]._value
+					_name: stat._name,
+					_value: stat._value
 				};
 				res_stats.push(stats);
-			}
+			});
 			const new_item = {
 				id: result._id,
 				name: result.name,
@@ -110,5 +133,10 @@ router.delete("/:id", (req, res) => {
 		}
 	});
 });
+
+// escape input search text
+function escapeRegex(text) {
+	return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
+}
 
 module.exports = router;

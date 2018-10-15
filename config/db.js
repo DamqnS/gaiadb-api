@@ -9,6 +9,7 @@ mongoose.connect(
 	`${process.env.MONGO_DB_URI}`,
 	{ useNewUrlParser: true }
 );
+mongoose.set("useCreateIndex", true);
 db.on("connected", () => {
 	console.log("Connected to database");
 });
