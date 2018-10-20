@@ -4,6 +4,7 @@ const router = express.Router();
 //Item schema
 const Item = require("../../models/item-model");
 
+// Excluding stats._id and __v fields on the response
 const removedFields = {
 	"stats._id": 0,
 	__v: 0,
@@ -11,26 +12,36 @@ const removedFields = {
 };
 
 // GET all items
-// Excluding stats._id and __v fields on the response
 router.get("/", (req, res) => {
 	// if a query params exist search based on it
 	const searchObj = {};
 	if (req.query.search) {
-		console.log(req.query.search);
-		// regex the input
+		// use regex on the input
 		const regex = new RegExp(escapeRegex(req.query.search), "gi");
 		searchObj.name = regex;
+	}
+	if (req.query.class) {
+		classSearch = capitalizeFirstLetter(req.query.class);
+		searchObj.class = classSearch;
+	}
+	if (req.query.type) {
+		typeSearch = capitalizeFirstLetter(req.query.type);
+		searchObj.type = typeSearch;
+	}
+	if (req.query.rarity) {
+		raritySearch = capitalizeFirstLetter(req.query.rarity);
+		searchObj.rarity = raritySearch;
 	}
 	Item.find(searchObj, removedFields)
 		.sort("-added")
 		.exec()
 		.then(docs => {
-			console.log("Retrieved documents");
+			console.log("Successfuly retrieved documents");
 			res.status(200).json(docs);
 		})
 		.catch(err => {
 			console.log(err.message);
-			res.status(500).json({
+			res.status(404).json({
 				message: "An error occured while retrieving documents"
 			});
 		});
@@ -51,42 +62,15 @@ router.post("/", (req, res) => {
 	item
 		.save()
 		.then(result => {
-			// loop results.stats to remove _id field in response
-			// let res_stats = [];
-			// for (let i = 0, len = result.stats.length; i < len; i++) {
-			// 	stats = {
-			// 		_name: result.stats[i]._name,
-			// 		_value: result.stats[i]._value
-			// 	};
-			// 	res_stats.push(stats);
-			// }
-			let res_stats = [];
-			result.stats.forEach(stat => {
-				stats = {
-					_name: stat._name,
-					_value: stat._value
-				};
-				res_stats.push(stats);
-			});
-			const new_item = {
-				id: result._id,
-				name: result.name,
-				class: result.class,
-				type: result.type,
-				rarity: result.rarity,
-				level: result.level,
-				description: result.description,
-				skills: result.skills,
-				stats: res_stats
-			};
 			res.status(201).json({
-				message: "Created document",
-				created_item: new_item
+				message: "Successfuly created document",
+				id: result._id,
+				name: result.name
 			});
 		})
 		.catch(err => {
 			console.log(err.message);
-			res.status(500).json({
+			res.status(400).json({
 				message: "An error occured while creating document"
 			});
 		});
@@ -96,7 +80,7 @@ router.post("/", (req, res) => {
 router.get("/:id", (req, res) => {
 	const id = req.params.id;
 
-	Item.findById(id, { "stats._id": 0, __v: 0, added: 0 })
+	Item.findById(id, removedFields)
 		.exec()
 		.then(doc => {
 			console.log("Retrieved document: \n" + doc);
@@ -104,14 +88,14 @@ router.get("/:id", (req, res) => {
 				res.status(200).json(doc);
 			} else {
 				res.status(404).json({
-					message: "No such document exists with this id"
+					message: "An error occured while retrieving document"
 				});
 			}
 		})
 		.catch(err => {
 			console.log(err.message);
-			res.status(500).json({
-				message: "An error occured while retrieving documents"
+			res.status(400).json({
+				message: "An error occured while retrieving document"
 			});
 		});
 });
@@ -120,15 +104,15 @@ router.get("/:id", (req, res) => {
 router.delete("/:id", (req, res) => {
 	const id = req.params.id;
 
-	Item.deleteOne({ _id: id }, err => {
+	Item.findByIdAndDelete(req.params.id, err => {
 		if (!err) {
 			res.status(200).json({
 				message: "Successfuly deleted document with id: " + id
 			});
 		} else {
-			console.log(err);
-			res.status(500).json({
-				message: "An error occured while trying to delete document"
+			console.log(err.message);
+			res.status(400).json({
+				message: "An error occured while deleting document"
 			});
 		}
 	});
@@ -139,4 +123,9 @@ function escapeRegex(text) {
 	return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
 }
 
+// capitalize the first letter
+function capitalizeFirstLetter(search) {
+	if (typeof search !== "string") return "";
+	return search.charAt(0).toUpperCase() + search.slice(1);
+}
 module.exports = router;
