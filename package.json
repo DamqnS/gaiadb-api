@@ -1,20 +1,20 @@
 {
-  "name": "server",
-  "version": "1.0.0",
-  "description": "API",
-  "main": "index.js",
-  "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js"
-  },
-  "author": "",
-  "license": "MIT",
-  "dependencies": {
-    "body-parser": "^1.18.3",
-    "cors": "^2.8.4",
-    "dotenv": "^6.0.0",
-    "express": "^4.16.3",
-    "mongoose": "^5.2.16",
-    "morgan": "^1.9.1"
-  }
+	"name": "server",
+	"version": "1.0.0",
+	"description": "Backend API using Express",
+	"main": "index.js",
+	"scripts": {
+		"start": "node index.js",
+		"dev": "nodemon index.js"
+	},
+	"author": "Damyan St.",
+	"license": "MIT",
+	"dependencies": {
+		"body-parser": "^1.18.3",
+		"cors": "^2.8.4",
+		"dotenv": "^6.0.0",
+		"express": "^4.16.3",
+		"mongoose": "^5.2.16",
+		"morgan": "^1.9.1"
+	}
 }
