@@ -14,23 +14,29 @@ const removedFields = {
 // GET all items
 router.get("/", (req, res) => {
 	// if a query params exist search based on it
-	const searchObj = {};
+	let searchObj = {};
 	if (req.query.search) {
 		// use regex on the input
 		const regex = new RegExp(escapeRegex(req.query.search), "gi");
 		searchObj.name = regex;
 	}
 	if (req.query.class) {
-		classSearch = capitalizeFirstLetter(req.query.class);
-		searchObj.class = classSearch;
+		searchObj.class = capitalizeFirstLetter(req.query.class);
 	}
 	if (req.query.type) {
-		typeSearch = capitalizeFirstLetter(req.query.type);
-		searchObj.type = typeSearch;
+		searchObj.type = capitalizeFirstLetter(req.query.type);
+	}
+	// search for items that are specified class AND type
+	if (req.query.class && req.query.type) {
+		searchObj = {
+			$and: [
+				{ class: capitalizeFirstLetter(req.query.class) },
+				{ type: capitalizeFirstLetter(req.query.type) }
+			]
+		};
 	}
 	if (req.query.rarity) {
-		raritySearch = capitalizeFirstLetter(req.query.rarity);
-		searchObj.rarity = raritySearch;
+		searchObj.rarity = capitalizeFirstLetter(req.query.rarity);
 	}
 	Item.find(searchObj, removedFields)
 		.sort("-added")
